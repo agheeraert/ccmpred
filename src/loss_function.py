@@ -9,6 +9,8 @@ import torch.optim as optim
 
 from Bio.PDB.Polypeptide import aa1
 
+import numpy as np
+
 def getQ(seq, i):
     return torch.LongTensor([aa_to_idx[seq[i]]])
 
@@ -67,12 +69,42 @@ if __name__=='__main__':
     #Computing nominator
     J_rij = J(s_i).resize(L, L, L)[:,r,:]
     nominator = torch.exp(H(s_r)[0,r] + (J_rij*mask).sum())
+
+    #Checking if nominator is correct
+    Hparam = list(H.parameters())[0]
+    Hparam = torch.FloatTensor(q,L).copy_(Hparam.data)
+    Jparam = list(J.parameters())[0]
+    Jparam = torch.FloatTensor(q,q,L,L).copy_(Jparam.data)
+
+    sigma_r = aa_to_idx[msa[b][r]]
+    nominator_naive = Hparam[sigma_r, r]
+    for i in range(0,L):
+        sigma_i = aa_to_idx[msa[b][i]]
+        if i != r:
+            nominator_naive += Jparam[sigma_r, sigma_i, r, i]
+    nominator_naive = np.exp(nominator_naive)
+
+    print 'Nominator check = ', nominator_naive, nominator.data[0]
+
     
     #Computing denominator
     J_rili = J(all_aa_si).resize(q,L,L,L)
     J_ili = J_rili[:,:,r,:]
     J_l = (J_ili*mask_extended).sum(dim=1).sum(dim=1)
     denominator = torch.exp(H(all_aa)[:,r] + J_l).sum()
+
+    #Checking if denominator is correct
+    denominator_naive = 0.0
+    for l in range(0, q):
+        denominator_naive_l = Hparam[l,r]
+        for i in range(0,L):
+            sigma_i = aa_to_idx[msa[b][i]]
+            if i != r:
+                denominator_naive_l += Jparam[l, sigma_i, r, i]
+        denominator_naive += np.exp(denominator_naive_l)
+
+    print 'Denominator check = ', denominator_naive, denominator.data[0]
+
     
     #neg log likelihood
     L = -torch.log(nominator) + torch.log(denominator)
