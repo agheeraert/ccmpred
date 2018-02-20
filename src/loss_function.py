@@ -49,14 +49,19 @@ if __name__=='__main__':
     s_i = Variable(torch.LongTensor(s_i))
 
     #mask to sum over repeting indexes in 2d
-    mask = torch.eye(L)
-    mask[r,r] = 0.0
-    mask = Variable(mask)
+    maskH = torch.eye(L)
+    maskH = Variable(maskH)
+    
+    mask2d = torch.eye(L)
+    for r in range(0,L):
+        mask3d[r,:,:].copy_(mask2d)
+        mask3d[r,r,r] = 0.0
+    mask3d = Variable(mask3d)
 
     #mask to sum over repeting indexes in 3d
     mask_extended = torch.FloatTensor(q,L,L)
     for i in range(0,q):
-        mask_extended[i, :, :].copy_(mask.data)
+        mask_extended[i, :, :].copy_(mask2d)
     mask_extended = Variable(mask_extended)
 
     all_aa = Variable(torch.LongTensor([i for i in range(0, q)]))
@@ -66,9 +71,30 @@ if __name__=='__main__':
             all_aa_si[i,j] = i*q + aa_to_idx[aa]
     all_aa_si = Variable(all_aa_si)
 
+
+    sigma_r_sigma_i = torch.LongTensor( L*L )
+    idx = 0
+    for r, aa in enumerate(msa[b]):
+        for i, aa in enumerate(msa[b]):
+            sigma_r = aa_to_idx[msa[b][r]]
+            sigma_i = aa_to_idx[msa[b][i]]
+            sigma_r_sigma_i[idx] = sigma_r*q + sigma_i
+            idx+=1
+
+    sigma_r_sigma_i = Variable(sigma_r_sigma_i)
+    print sigma_r_sigma_i
+
     #Computing nominator
-    J_rij = J(s_i).resize(L, L, L)[:,r,:]
-    nominator = torch.exp(H(s_r)[0,r] + (J_rij*mask).sum())
+    # print s_i
+    H_rr = H(s_i).resize(L, L)
+    H_r = (H_rr*maskH).sum(dim=1)
+
+    print J(sigma_r_sigma_i).size()
+    J_rij = J(sigma_r_sigma_i).resize(L, L, L, L)
+    J_rij = J_rij*mask3d
+    J_i = J_rij.sum(dim=0).sum(dim=1)
+    nominator = torch.exp( H_r + J_i )
+    # print nominator
 
     #Checking if nominator is correct
     Hparam = list(H.parameters())[0]
@@ -78,13 +104,14 @@ if __name__=='__main__':
 
     sigma_r = aa_to_idx[msa[b][r]]
     nominator_naive = Hparam[sigma_r, r]
+    print nominator_naive
     for i in range(0,L):
         sigma_i = aa_to_idx[msa[b][i]]
         if i != r:
             nominator_naive += Jparam[sigma_r, sigma_i, r, i]
     nominator_naive = np.exp(nominator_naive)
 
-    print 'Nominator check = ', nominator_naive, nominator.data[0]
+    # print 'Nominator check = ', nominator_naive, nominator.data[r]
 
     
     #Computing denominator
@@ -103,10 +130,10 @@ if __name__=='__main__':
                 denominator_naive_l += Jparam[l, sigma_i, r, i]
         denominator_naive += np.exp(denominator_naive_l)
 
-    print 'Denominator check = ', denominator_naive, denominator.data[0]
+    # print 'Denominator check = ', denominator_naive, denominator.data[0]
 
     
     #neg log likelihood
     L = -torch.log(nominator) + torch.log(denominator)
-    print L
+    # print L
     
