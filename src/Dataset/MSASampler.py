@@ -18,11 +18,11 @@ class MSASampler(Dataset):
 	"""
 	The dataset that loads msa and samples b and r
 	"""
-	def __init__(self, filename):
+	def __init__(self, filename, max_iter = 100):
 		"""
 		"""
 		self.filename = filename
-		aa = list(aa1 +'X'+'-')
+		aa = list(aa1 +'-')
 		self.aa_to_idx = {}
 		for i, a in enumerate(aa):
 			self.aa_to_idx[a] = i
@@ -40,6 +40,10 @@ class MSASampler(Dataset):
 		for i in range(0,self.M):
 			for j in range(0,self.L):
 				self.indexing.append((i,j))
+
+		if max_iter < len(self.indexing):
+			random.shuffle(self.indexing)
+			self.indexing = self.indexing[:max_iter]
 
 		self.dataset_size = len(self.indexing)
 		print self.L, self.q
