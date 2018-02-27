@@ -3,7 +3,7 @@ import sys
 import torch
 import argparse
 from Training import CCMPredTrainer
-from Dataset import get_msa_stream
+from Dataset.MSASampler import get_msa_stream
 from tqdm import tqdm
 
 import matplotlib.pylab as plt
@@ -48,9 +48,9 @@ if __name__=='__main__':
 	# torch.cuda.set_device(1)
 	loss_list = []
 	stream_train = get_msa_stream("../database/1BDO_A.aln", shuffle=True)
-	trainer = CCMPredTrainer(L = stream_train.dataset.L, q = stream_train.dataset.q, lr = args.lr, weight_decay=args.wd, lr_decay=args.lrd, gpu=gpu)
-	for epoch in tqdm(xrange(args.max_epoch)):
-		
+	trainer = CCMPredTrainer.CCMPredTrainer(L = stream_train.dataset.L, q = stream_train.dataset.q, lr = args.lr, weight_decay=args.wd, lr_decay=args.lrd, gpu=gpu)
+
+	for epoch in tqdm(range(args.max_epoch)):
 		av_loss = 0.0
 		for data in stream_train:
 			loss = trainer.optimize(data)
@@ -62,6 +62,7 @@ if __name__=='__main__':
 	plot_mat('../database/1BDO_A.mat')
 
 	f = plt.figure()
+	trainer.model.create_output()
 	cmat = trainer.model.contact_matrix().numpy()
 	plt.title("This algorithm result")
 	plt.imshow(cmat)

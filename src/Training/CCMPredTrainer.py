@@ -20,7 +20,7 @@ class CCMPredTrainer:
 		self.lr = lr
 		self.lr_decay = lr_decay
 		self.gpu = gpu
-		self.model = LogLossRB(L, q, gpu=gpu)
+		self.model = LogLossRB.LogLossRB(L, q, gpu=gpu)
 		self.optimizer = optim.Adam(self.model.parameters(), lr=self.lr, weight_decay=self.wd)
 		if gpu:
 			self.model.cuda()
@@ -45,16 +45,16 @@ class CCMPredTrainer:
 		Output: loss
 		"""
 		self.optimizer.zero_grad()
-		s_r, s_i, all_aa_si, r = data
-		s_r, s_i, all_aa_si = torch.squeeze(s_r), torch.squeeze(s_i), torch.squeeze(all_aa_si)
+		s_r, s_i, all_aa_si, r, w_b = data
+		s_r, s_i, all_aa_si, r = torch.squeeze(s_r), torch.squeeze(s_i), torch.squeeze(all_aa_si), torch.squeeze(r)
 		if self.gpu:
 			s_r, s_i, all_aa_si, r = s_r.cuda(), s_i.cuda(), all_aa_si.cuda(), r.cuda()
 		s_r, s_i, all_aa_si = Variable(s_r), Variable(s_i), Variable(all_aa_si)
 				
-		model_out = self.model(s_r, s_i, all_aa_si, r)
+		model_out = self.model(s_r, s_i, all_aa_si, r, w_b)
 		model_out.backward()
 		
 		self.optimizer.step()
 		self.model.symmetrize()
 
-		return model_out.data[0]
+		return model_out.data
