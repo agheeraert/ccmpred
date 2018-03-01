@@ -37,11 +37,7 @@ class LogLossRB(nn.Module):
 
 			Jp.copy_(J.view(self.q, self.q, self.L, self.L).data)
 			Jp = torch.transpose(torch.transpose(Jp, dim0=0, dim1=1), dim0=2, dim1=3)
-<<<<<<< HEAD
 			Jp = (J.view(self.q, self.q, self.L, self.L).data + Jp)/2
-=======
-			Jp = (J.view(self.q, self.q, self.L, self.L).data + Jp)*0.5
->>>>>>> 96e9a0e260a5471391053225ba1a63eafea6c2f8
 		J.data.copy_(Jp.view(self.q*self.q, self.L*self.L))
 	
 	def create_output(self):
@@ -59,7 +55,6 @@ class LogLossRB(nn.Module):
 		Computes renormalized matrix
 		"""
 		for J in self.J.parameters():
-<<<<<<< HEAD
 			Jp = J.view(self.q, self.q, self.L, self.L)
 			Jp = Jp - torch.mean(Jp, dim=0) - torch.mean(Jp, dim=1) + torch.mean(torch.mean(Jp, dim=0), dim=0)
 			S_FN = Jp*Jp
@@ -67,17 +62,6 @@ class LogLossRB(nn.Module):
 
 			S_CN = S_FN - torch.mean(S_FN, dim=0).view(1,self.L) * torch.mean(S_FN, dim=1).view(self.L,1) / torch.mean(S_FN)
 			return S_CN.data
-=======
-			Jp = J.data
-		
-		Jp = Jp.view(self.q, self.q, self.L, self.L)
-		Jp = Jp - torch.mean(Jp, dim=0) - torch.mean(Jp, dim=1) + torch.mean(torch.mean(Jp, dim=0), dim=0)
-		S_FN = Jp*Jp
-		S_FN = torch.sqrt(torch.sum(torch.sum(S_FN, dim=0), dim=0))
-
-		S_CN = S_FN - torch.mean(S_FN, dim=0).resize_(1,self.L) * torch.mean(S_FN, dim=1).resize_(self.L,1) / torch.mean(S_FN)
-		return S_CN
->>>>>>> 96e9a0e260a5471391053225ba1a63eafea6c2f8
 
 
 	def forward(self, sigma_r, sigma_i, sigma_ri, r, w_b):
@@ -95,71 +79,17 @@ class LogLossRB(nn.Module):
 		for i in range(0,self.q):
 			mask_extended[i, :, :].copy_(mask.data)
 		mask_extended = Variable(mask_extended)
-<<<<<<< HEAD
-=======
-
-		J_rij = self.J(sigma_i).resize(self.L, self.L, self.L)[:,r,:]
-		nominator = torch.exp(self.H(sigma_r)[0,r] + (J_rij*mask).sum())
->>>>>>> 96e9a0e260a5471391053225ba1a63eafea6c2f8
 		
 		J_rili = self.J(sigma_ri).resize(self.q, self.L, self.L, self.L)
 		J_ili = torch.squeeze(J_rili[:,:,r,:])
 		J_l = (J_ili*mask_extended).sum(dim=1).sum(dim=1)
 		denominator = torch.exp(self.H(self.all_aa)[:,r] + J_l).sum()
 
-<<<<<<< HEAD
 		Lpseudo = (-(self.H(self.all_aa)[:,r] + J_l)[sigma_r] + torch.log(denominator))*w_b[0]
-=======
-		Lpseudo = (-torch.log(nominator) + torch.log(denominator))*w_b[0]
->>>>>>> 96e9a0e260a5471391053225ba1a63eafea6c2f8
 
 		#regularization
 		for H in self.H.parameters():
 			Lpseudo += self.lambda_h*torch.sum(H*H)
 		for J in self.J.parameters():
 			Lpseudo += self.lambda_j*torch.sum(J*J)
-<<<<<<< HEAD
 		return Lpseudo
-=======
-
-		return Lpseudo
-
-
-if __name__=='__main__':
-	from Bio.PDB.Polypeptide import aa1
-	aa = list(aa1 + '-')
-	aa_to_idx = {}
-	for i, a in enumerate(aa):
-		aa_to_idx[a] = i
-
-	print(aa_to_idx)
-
-	with open("../../database/1BDO_A.aln", "r") as msa_file:
-		msa = []
-		for line in msa_file.readlines():
-			msa.append(list(line.split()[0]))
-
-	L = len(msa[0]) #sequence length
-	q = len(aa) #number of aa
-	b = 1
-	r = 2
-
-	s_r = Variable(torch.LongTensor([aa_to_idx[msa[b][i]]]))
-	s_i = []
-	for i, aa in enumerate(msa[b]):
-		s_i.append(aa_to_idx[msa[b][r]]*q + aa_to_idx[aa])
-	s_i = Variable(torch.LongTensor(s_i))
-
-	all_aa_si = torch.LongTensor(q,L)
-	for i in range(0,q):
-		for j, aa in enumerate(msa[b]):
-			all_aa_si[i,j] = i*q + aa_to_idx[aa]
-	all_aa_si = Variable(all_aa_si)
-
-	loss = LogLossRB(L)
-	for parameter in loss.parameters():
-		print(parameter)
-
-	y = loss(s_r, s_i, all_aa_si, r)
-	y.backward()
->>>>>>> 96e9a0e260a5471391053225ba1a63eafea6c2f8

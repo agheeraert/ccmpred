@@ -70,10 +70,6 @@ class MSASampler(Dataset):
 			for j, aa in enumerate(self.msa[b]):
 				all_aa_si[i,j] = i*self.q + aa
 
-<<<<<<< HEAD
-
-=======
->>>>>>> 96e9a0e260a5471391053225ba1a63eafea6c2f8
 		#Reweighting		
 		sims = 0
 		for m in range(self.M):
@@ -92,8 +88,4 @@ class MSASampler(Dataset):
 def get_msa_stream(filename, batch_size = 1, shuffle = True):
 	dataset = MSASampler(filename)
 	trainloader = torch.utils.data.DataLoader(dataset, batch_size=1, shuffle=shuffle, num_workers=0)
-<<<<<<< HEAD
 	return trainloader
-=======
-	return trainloader
->>>>>>> 96e9a0e260a5471391053225ba1a63eafea6c2f8

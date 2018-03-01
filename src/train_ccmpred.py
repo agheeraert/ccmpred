@@ -4,10 +4,7 @@ import torch
 import argparse
 from Training import CCMPredTrainer
 from Dataset.MSASampler import get_msa_stream
-<<<<<<< HEAD
 from Dataset.MSASamplerKKp import get_msa_streamKKp
-=======
->>>>>>> 96e9a0e260a5471391053225ba1a63eafea6c2f8
 from tqdm import tqdm
 
 import matplotlib.pylab as plt
@@ -35,18 +32,11 @@ if __name__=='__main__':
 	parser = argparse.ArgumentParser(description='CCMPred training')	
 	
 	parser.add_argument('-lr', default=0.001 , help='Learning rate')
-<<<<<<< HEAD
 	parser.add_argument('-lrd', default=0.0001, help='Learning rate decay')
 	parser.add_argument('-wd', default=0.0, help='Weight decay')
-	parser.add_argument('-max_epoch', default=300, help='Max epoch')
+	parser.add_argument('-max_epoch', default=30, help='Max epoch')
 	parser.add_argument('-gpu', default=None, help='Use gpu')
 	parser.add_argument('-method', default='J', help='Use the method with J or K.K\'')
-=======
-	parser.add_argument('-lrd', default=0.0001 , help='Learning rate decay')
-	parser.add_argument('-wd', default=0.0, help='Weight decay')
-	parser.add_argument('-max_epoch', default=200, help='Max epoch')
-	parser.add_argument('-gpu', default=None, help='Use gpu')
->>>>>>> 96e9a0e260a5471391053225ba1a63eafea6c2f8
 	
 	args = parser.parse_args()
 	if args.gpu is None:
@@ -54,7 +44,6 @@ if __name__=='__main__':
 	else:
 		gpu = True
 	
-<<<<<<< HEAD
 
 	
 	# 
@@ -69,15 +58,6 @@ if __name__=='__main__':
 		stream_train = get_msa_stream("../database/1BDO_A.aln", shuffle=True)
 	
 	trainer = CCMPredTrainer.CCMPredTrainer(L = stream_train.dataset.L, q = stream_train.dataset.q, lr = args.lr, weight_decay=args.wd, lr_decay=args.lrd, gpu=gpu, method=args.method)
-=======
-	# 
-	# sys.exit()
-
-	# torch.cuda.set_device(1)
-	loss_list = []
-	stream_train = get_msa_stream("../database/1BDO_A.aln", shuffle=True)
-	trainer = CCMPredTrainer.CCMPredTrainer(L = stream_train.dataset.L, q = stream_train.dataset.q, lr = args.lr, weight_decay=args.wd, lr_decay=args.lrd, gpu=gpu)
->>>>>>> 96e9a0e260a5471391053225ba1a63eafea6c2f8
 
 	for epoch in tqdm(range(args.max_epoch)):
 		av_loss = 0.0
@@ -92,19 +72,14 @@ if __name__=='__main__':
 
 	f = plt.figure()
 	trainer.model.create_output()
-<<<<<<< HEAD
 	if not gpu:
 		cmat = trainer.model.contact_matrix().numpy()
 	else:
 		cmat = trainer.model.contact_matrix().cpu().numpy()
-=======
-	cmat = trainer.model.contact_matrix().numpy()
->>>>>>> 96e9a0e260a5471391053225ba1a63eafea6c2f8
 	plt.title("This algorithm result")
 	plt.imshow(cmat)
 	plt.colorbar()
 	plt.show()
-<<<<<<< HEAD
 	if args.method == 'K':
 		if not gpu:
 			aaint = trainer.model.aa_interactions().numpy()
@@ -114,8 +89,6 @@ if __name__=='__main__':
 		plt.imshow(aaint)
 		plt.colorbar()
 		plt.show()		
-=======
->>>>>>> 96e9a0e260a5471391053225ba1a63eafea6c2f8
 
 	f = plt.figure()
 	plt.title("Loss vs epoch")
