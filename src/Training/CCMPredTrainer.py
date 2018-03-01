@@ -10,17 +10,33 @@ import os
 import sys
 
 sys.path.append(os.path.join(os.path.dirname(__file__), ".."))
+<<<<<<< HEAD
+from Models import LogLossRB, LogLossKKp
+=======
 from Models import LogLossRB
+>>>>>>> 96e9a0e260a5471391053225ba1a63eafea6c2f8
 
 
 
 class CCMPredTrainer:
+<<<<<<< HEAD
+	def __init__(self, L, q, lr=0.001, weight_decay=0.0, lr_decay=0.0001, gpu = False, method = 'J'):
+=======
 	def __init__(self, L, q, lr=0.001, weight_decay=0.0, lr_decay=0.0001, gpu = False):
+>>>>>>> 96e9a0e260a5471391053225ba1a63eafea6c2f8
 		self.wd = weight_decay
 		self.lr = lr
 		self.lr_decay = lr_decay
 		self.gpu = gpu
+<<<<<<< HEAD
+		self.method = method
+		if method == 'K':
+			self.model = LogLossKKp.LogLossKKp(L, q, gpu=gpu)
+		else:
+			self.model = LogLossRB.LogLossRB(L, q, gpu=gpu)
+=======
 		self.model = LogLossRB.LogLossRB(L, q, gpu=gpu)
+>>>>>>> 96e9a0e260a5471391053225ba1a63eafea6c2f8
 		self.optimizer = optim.Adam(self.model.parameters(), lr=self.lr, weight_decay=self.wd)
 		if gpu:
 			self.model.cuda()
@@ -45,6 +61,26 @@ class CCMPredTrainer:
 		Output: loss
 		"""
 		self.optimizer.zero_grad()
+<<<<<<< HEAD
+		if self.method == 'K':
+			s_r, w_b = data
+			s_r = torch.squeeze(s_r)
+			if self.gpu:
+				s_r = s_r.cuda()
+			s_r = Variable(s_r)
+				
+			model_out = self.model(s_r, w_b)
+			
+		else:
+			s_r, s_i, all_aa_si, r, w_b = data
+			s_r, s_i, all_aa_si = torch.squeeze(s_r), torch.squeeze(s_i), torch.squeeze(all_aa_si)
+			if self.gpu:
+				s_r, s_i, all_aa_si = s_r.cuda(), s_i.cuda(), all_aa_si.cuda()
+			s_r, s_i, all_aa_si = Variable(s_r), Variable(s_i), Variable(all_aa_si)
+				
+			model_out = self.model(s_r, s_i, all_aa_si, r, w_b)
+
+=======
 		s_r, s_i, all_aa_si, r, w_b = data
 		s_r, s_i, all_aa_si, r = torch.squeeze(s_r), torch.squeeze(s_i), torch.squeeze(all_aa_si), torch.squeeze(r)
 		if self.gpu:
@@ -52,6 +88,7 @@ class CCMPredTrainer:
 		s_r, s_i, all_aa_si = Variable(s_r), Variable(s_i), Variable(all_aa_si)
 				
 		model_out = self.model(s_r, s_i, all_aa_si, r, w_b)
+>>>>>>> 96e9a0e260a5471391053225ba1a63eafea6c2f8
 		model_out.backward()
 		
 		self.optimizer.step()

@@ -12,10 +12,10 @@ from os.path import isfile
 import random
 random.seed(42)
 
-# sys.path.append(os.path.join(os.path.dirname(__file__), "../.."))
 from Bio.PDB.Polypeptide import aa1
 
-class MSASampler(Dataset):
+
+class MSASamplerKKp(Dataset):
 	"""
 	The dataset that loads msa and samples b and r
 	"""
@@ -46,8 +46,7 @@ class MSASampler(Dataset):
 
 		self.indexing = []
 		for i in range(0,self.M):
-			for j in range(0,self.L):
-				self.indexing.append((i,j))
+			self.indexing.append(self.msa[i])
 
 		if max_iter < len(self.indexing):
 			random.shuffle(self.indexing)
@@ -58,30 +57,16 @@ class MSASampler(Dataset):
 	def __getitem__(self, index):
 		"""
 		"""
-		b, r = self.indexing[index]
-		s_r = torch.LongTensor([self.msa[b, r]])
-		s_i = []
-		for i, aa in enumerate(self.msa[b]):
-			s_i.append(self.msa[b, r]*self.q + aa)
-	    
-		s_i = torch.LongTensor(s_i)
-		all_aa_si = torch.LongTensor(self.q,self.L)
-		for i in range(0,self.q):
-			for j, aa in enumerate(self.msa[b]):
-				all_aa_si[i,j] = i*self.q + aa
+		s_i = self.indexing[index].long()
 
-<<<<<<< HEAD
-
-=======
->>>>>>> 96e9a0e260a5471391053225ba1a63eafea6c2f8
 		#Reweighting		
 		sims = 0
 		for m in range(self.M):
-			if torch.sum(torch.eq(self.msa[b], self.msa[m])) > 0.9*self.L:
+			if torch.sum(torch.eq(s_i, self.msa[m].long())) > 0.9*self.L:
 		 		sims += 1
 		w_b = 1./sims
 
-		return s_r, s_i, all_aa_si, r, w_b
+		return s_i, w_b
 
 	def __len__(self):
 		"""
@@ -89,11 +74,7 @@ class MSASampler(Dataset):
 		"""
 		return self.dataset_size
 
-def get_msa_stream(filename, batch_size = 1, shuffle = True):
-	dataset = MSASampler(filename)
+def get_msa_streamKKp(filename, batch_size = 1, shuffle = True):
+	dataset = MSASamplerKKp(filename)
 	trainloader = torch.utils.data.DataLoader(dataset, batch_size=1, shuffle=shuffle, num_workers=0)
-<<<<<<< HEAD
 	return trainloader
-=======
-	return trainloader
->>>>>>> 96e9a0e260a5471391053225ba1a63eafea6c2f8
