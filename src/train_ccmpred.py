@@ -34,7 +34,7 @@ if __name__=='__main__':
 	parser.add_argument('-lr', default=0.001 , help='Learning rate')
 	parser.add_argument('-lrd', default=0.0001, help='Learning rate decay')
 	parser.add_argument('-wd', default=0.0, help='Weight decay')
-	parser.add_argument('-max_epoch', default=300, help='Max epoch')
+	parser.add_argument('-max_epoch', default=30, help='Max epoch')
 	parser.add_argument('-gpu', default=None, help='Use gpu')
 	parser.add_argument('-method', default='J', help='Use the method with J or K.K\'')
 	

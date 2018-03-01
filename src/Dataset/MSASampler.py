@@ -70,7 +70,6 @@ class MSASampler(Dataset):
 			for j, aa in enumerate(self.msa[b]):
 				all_aa_si[i,j] = i*self.q + aa
 
-
 		#Reweighting		
 		sims = 0
 		for m in range(self.M):

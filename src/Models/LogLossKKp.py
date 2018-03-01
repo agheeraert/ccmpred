@@ -60,7 +60,7 @@ class LogLossKKp(nn.Module):
 		dl = self.H(self.all_aa).add(Jl)
 
 		Lpseudo = w_b[0]*((-dl[sigma_i] + dl.exp().sum(dim=0).log())).sum()
-		
+
 		# lpseudo = 0
 		# for r in range(self.L):
 		# 	s1 = 0
