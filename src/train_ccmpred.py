@@ -34,7 +34,7 @@ if __name__=='__main__':
 	parser.add_argument('-lr', default=0.001 , help='Learning rate')
 	parser.add_argument('-lrd', default=0.0001, help='Learning rate decay')
 	parser.add_argument('-wd', default=0.0, help='Weight decay')
-	parser.add_argument('-max_epoch', default=30, help='Max epoch')
+	parser.add_argument('-max_epoch', default=60, help='Max epoch')
 	parser.add_argument('-gpu', default=None, help='Use gpu')
 	parser.add_argument('-method', default='J', help='Use the method with J or K.K\'')
 	
@@ -57,7 +57,7 @@ if __name__=='__main__':
 	else:
 		stream_train = get_msa_stream("../database/1BDO_A.aln", shuffle=True)
 	
-	trainer = CCMPredTrainer.CCMPredTrainer(L = stream_train.dataset.L, q = stream_train.dataset.q, lr = args.lr, weight_decay=args.wd, lr_decay=args.lrd, gpu=gpu, method=args.method)
+	trainer = CCMPredTrainer.CCMPredTrainer(M = stream_train.dataset.M, L = stream_train.dataset.L, q = stream_train.dataset.q, lr = args.lr, weight_decay=args.wd, lr_decay=args.lrd, gpu=gpu, method=args.method)
 
 	for epoch in tqdm(range(args.max_epoch)):
 		av_loss = 0.0

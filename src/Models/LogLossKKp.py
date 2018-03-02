@@ -7,8 +7,9 @@ class LogLossKKp(nn.Module):
 	'''
 	Negative log loss given position and sequence
 	'''
-	def __init__(self, L, q=21, gpu=False, lambda_h=0.01, lambda_k=0.01, lambda_kp=0.01 ):
+	def __init__(self, M, L, q=21, gpu=False, lambda_h=0.01, lambda_k=0.01, lambda_kp=0.01 ):
 		super(LogLossKKp, self).__init__()
+		self.M = M
 		self.L = L
 		self.q = q
 		self.H = nn.Embedding(q, L)
@@ -23,11 +24,13 @@ class LogLossKKp(nn.Module):
 			self.H = self.H.cuda()
 			self.K = self.K.cuda()			
 			self.Kp = self.Kp.cuda()
-
-		self.all_aa = torch.LongTensor([i for i in range(0, q)])
+		all_aa = torch.LongTensor([i for i in range(0, q)])
+		self.all_aa_extended = torch.zeros(self.M, self.q)
+		for m in range(self.M):
+			self.all_aa_extended[m,:].copy_(all_aa)
 		if gpu:
-			self.all_aa = self.all_aa.cuda()
-		self.all_aa = Variable(self.all_aa)
+			self.all_aa_extended = self.all_aa_extended.cuda()
+		self.all_aa_extended = Variable(self.all_aa_extended.long())
 
 	def contact_matrix(self):
 		"""
@@ -43,8 +46,9 @@ class LogLossKKp(nn.Module):
 		for K in self.K.parameters():
 			return K.data
 
-	def forward(self, sigma_i, w_b):
-		Kl = self.K(sigma_i)		
+	def forward(self, msa, w_b):
+		Kl = self.K(msa)
+
 		positions = Variable(torch.arange(self.L).long())
 		if self.gpu:
 		    positions = positions.cuda()
@@ -55,25 +59,24 @@ class LogLossKKp(nn.Module):
 		Jl = torch.FloatTensor(self.q, self.L)
 		if self.gpu:
 			Jl = Jl.cuda()
-        
-		Jl = torch.matmul(Kpi, Kl).t()
-		dl = self.H(self.all_aa).add(Jl)
+		Jl = torch.matmul(Kpi, Kl).permute(0,2,1)
+		dl = self.H(self.all_aa_extended) + Jl
 
-		Lpseudo = w_b[0]*((-dl[sigma_i] + dl.exp().sum(dim=0).log())).sum()
+		Lpseudo = torch.matmul(-w_b, ((dl[msa.view(-1)][:,0,0]).contiguous().view(self.M, self.L) - dl.exp().sum(dim=1).log()).sum(dim=1)).sum()
 
 		# lpseudo = 0
 		# for r in range(self.L):
 		# 	s1 = 0
 		# 	for i in range(self.L):
 		# 		if i != r:
-		# 			s1 += self.K(sigma_i)[sigma_i[r], sigma_i[i]]*self.Kp(positions)[r, i]
-		# 	nominator = torch.exp(self.H(sigma_i)[r] + s1)
+		# 			s1 += self.K(sigma)[sigma[r], sigma[i]]*self.Kp(positions)[r, i]
+		# 	nominator = torch.exp(self.H(sigma)[r] + s1)
 		# 	denominator = 0
 		# 	for l in range(self.q):
 		# 		s2 = 0
 		# 		for i in range(self.L):
 		# 			if i != r:
-		# 				s2 += self.K(self.all_aa)[sigma_i[r], sigma_i[i]]*self.Kp(positions)[r, i]
+		# 				s2 += self.K(self.all_aa)[sigma[r], sigma[i]]*self.Kp(positions)[r, i]
 		# 		denominator += torch.exp(self.H(self.all_aa)[l]+ s2)
 		# 	lpseudo += nominator/denominator
 		# print(lpseudo - Lpseudo)

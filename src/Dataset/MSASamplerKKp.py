@@ -19,7 +19,7 @@ class MSASamplerKKp(Dataset):
 	"""
 	The dataset that loads msa and samples b and r
 	"""
-	def __init__(self, filename, max_iter = 100):
+	def __init__(self, filename, max_iter = 1):
 		"""
 		"""
 		self.filename = filename
@@ -44,9 +44,7 @@ class MSASamplerKKp(Dataset):
 					self.msa[m][l] = 20
 		self.msa = torch.from_numpy(np.asarray(self.msa))
 
-		self.indexing = []
-		for i in range(0,self.M):
-			self.indexing.append(self.msa[i])
+		self.indexing = [self.msa]
 
 		if max_iter < len(self.indexing):
 			random.shuffle(self.indexing)
@@ -57,16 +55,18 @@ class MSASamplerKKp(Dataset):
 	def __getitem__(self, index):
 		"""
 		"""
-		s_i = self.indexing[index].long()
+		msa = self.indexing[index].long()
 
 		#Reweighting		
-		sims = 0
-		for m in range(self.M):
-			if torch.sum(torch.eq(s_i, self.msa[m].long())) > 0.9*self.L:
-		 		sims += 1
-		w_b = 1./sims
+		sims_b = torch.ones(self.M)
+		for b in range(self.M):
+			for m in range(b+1, self.M):
+				if torch.sum(torch.eq(self.msa[b].long(), self.msa[m].long())) > 0.9*self.L:
+					sims_b[b] += 1
+					sims_b[m] += 1
+		w_b = 1./sims_b
 
-		return s_i, w_b
+		return msa, w_b
 
 	def __len__(self):
 		"""
