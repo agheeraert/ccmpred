@@ -5,7 +5,8 @@ from torch.utils.data import Dataset
 from torch.utils.data import DataLoader
 import atexit
 import numpy as np
-import _pickle as pkl
+# import _pickle as pkl
+import cPickle as pkl
 
 from os import listdir
 from os.path import isfile
@@ -44,20 +45,20 @@ class MSASamplerKKp(Dataset):
 					self.msa[m][l] = 20
 		self.msa = torch.from_numpy(np.asarray(self.msa))
 
-		self.indexing = []
-		for i in range(0,self.M):
-			self.indexing.append(self.msa[i])
+		# self.indexing = []
+		# for i in range(0,self.M):
+		# 	self.indexing.append(self.msa[i])
 
-		if max_iter < len(self.indexing):
-			random.shuffle(self.indexing)
-			self.indexing = self.indexing[:max_iter]
+		# if max_iter < len(self.indexing):
+		# 	random.shuffle(self.indexing)
+		# 	self.indexing = self.indexing[:max_iter]
 
-		self.dataset_size = len(self.indexing)
+		self.dataset_size = len(self.msa)
 
 	def __getitem__(self, index):
 		"""
 		"""
-		s_i = self.indexing[index].long()
+		s_i = self.msa[index].long()
 
 		#Reweighting		
 		sims = 0

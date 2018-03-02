@@ -10,7 +10,7 @@ import os
 import sys
 
 sys.path.append(os.path.join(os.path.dirname(__file__), ".."))
-from Models import LogLossRB, LogLossKKp
+from Models import LogLossRB, LogLossFactorized
 
 
 
@@ -22,7 +22,7 @@ class CCMPredTrainer:
 		self.gpu = gpu
 		self.method = method
 		if method == 'K':
-			self.model = LogLossKKp.LogLossKKp(L, q, gpu=gpu)
+			self.model = LogLossFactorized(L, q, gpu=gpu)
 		else:
 			self.model = LogLossRB.LogLossRB(L, q, gpu=gpu)
 		self.optimizer = optim.Adam(self.model.parameters(), lr=self.lr, weight_decay=self.wd)

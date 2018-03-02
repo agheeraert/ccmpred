@@ -7,7 +7,7 @@ class LogLossKKp(nn.Module):
 	'''
 	Negative log loss given position and sequence
 	'''
-	def __init__(self, L, q=21, gpu=False, lambda_h=0.01, lambda_k=0.01, lambda_kp=0.01 ):
+	def __init__(self, L, q=21, gpu=False, lambda_h=0.01, lambda_k=0.0, lambda_kp=0.01 ):
 		super(LogLossKKp, self).__init__()
 		self.L = L
 		self.q = q
@@ -29,12 +29,26 @@ class LogLossKKp(nn.Module):
 			self.all_aa = self.all_aa.cuda()
 		self.all_aa = Variable(self.all_aa)
 
+		# for H in self.H.parameters():
+		# 	H.data.zero_()
+		# for K in self.K.parameters():
+		# 	K.data.zero_()
+		# for Kp in self.Kp.parameters():
+		# 	Kp.data.zero_()
+
 	def contact_matrix(self):
 		"""
 		Returns the contact matrix
 		"""
-		for Kp in self.Kp.parameters():
-			return Kp.data
+		for J in self.Kp.parameters():
+			Jp = J.view(self.L, self.L)
+			S_FN = torch.sqrt(Jp*Jp)
+
+			S_CN = S_FN - torch.mean(S_FN, dim=0).view(1,self.L) * torch.mean(S_FN, dim=1).view(self.L,1) / torch.mean(S_FN)
+			return S_CN.data
+
+		# for Kp in self.Kp.parameters():
+		# 	return Kp.data
 
 	def aa_interactions(self):
 		"""
@@ -52,9 +66,9 @@ class LogLossKKp(nn.Module):
 		Kpi = self.Kp(positions)
 		Kpi = Kpi - Kpi.diag().diag()
 		
-		Jl = torch.FloatTensor(self.q, self.L)
-		if self.gpu:
-			Jl = Jl.cuda()
+		# Jl = torch.FloatTensor(self.q, self.L)
+		# if self.gpu:
+		# 	Jl = Jl.cuda()
         
 		Jl = torch.matmul(Kpi, Kl).t()
 		dl = self.H(self.all_aa).add(Jl)
@@ -103,7 +117,7 @@ class LogLossKKp(nn.Module):
 			Kps = 0.5*(Kpt+Kp.data)
 			Kp.data.copy_(Kps)		
 
-	def create_output(self):
+	def save(self):
 		"""
 		Creates an output file containing the computed H and J
 		"""
@@ -113,3 +127,12 @@ class LogLossKKp(nn.Module):
 		torch.save(self.H, '../results/1BDO_A_H.out')
 		torch.save(self.K, '../results/1BDO_A_K.out')
 		torch.save(self.Kp, '../results/1BDO_A_Kp.out')
+
+	def load(self):
+		"""
+		Creates an output file containing the computed H and J
+		"""
+		
+		self.H = torch.load('../results/1BDO_A_H.out')
+		self.K = torch.load('../results/1BDO_A_K.out')
+		self.Kp = torch.load('../results/1BDO_A_Kp.out')
