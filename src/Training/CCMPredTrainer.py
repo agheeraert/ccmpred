@@ -10,19 +10,19 @@ import os
 import sys
 
 sys.path.append(os.path.join(os.path.dirname(__file__), ".."))
-from Models import LogLossRB, LogLossKKp
+from Models import LogLossRB, LogLossFactorized
 
 
 
 class CCMPredTrainer:
-	def __init__(self, M, L, q, lr=0.001, weight_decay=0.0, lr_decay=0.0001, gpu = False, method = 'J'):
+	def __init__(self, L, q, lr=0.001, weight_decay=0.0, lr_decay=0.0001, gpu = False, method = 'J'):
 		self.wd = weight_decay
 		self.lr = lr
 		self.lr_decay = lr_decay
 		self.gpu = gpu
 		self.method = method
 		if method == 'K':
-			self.model = LogLossKKp.LogLossKKp(M, L, q, gpu=gpu)
+			self.model = LogLossFactorized.LogLossFactorized(L, q, gpu=gpu)
 		else:
 			self.model = LogLossRB.LogLossRB(L, q, gpu=gpu)
 		self.optimizer = optim.Adam(self.model.parameters(), lr=self.lr, weight_decay=self.wd)
@@ -50,13 +50,13 @@ class CCMPredTrainer:
 		"""
 		self.optimizer.zero_grad()
 		if self.method == 'K':
-			msa, w_b = data
-			msa, wb = torch.squeeze(msa), torch.squeeze(w_b)
+			s_r, w_b = data
+			s_r = torch.squeeze(s_r)
 			if self.gpu:
-				msa, w_b = msa.cuda(), w_b.cuda()
-			msa, w_b = Variable(msa), Variable(w_b)
+				s_r = s_r.cuda()
+			s_r = Variable(s_r)
 				
-			model_out = self.model(msa, w_b)
+			model_out = self.model(s_r, w_b)
 			
 		else:
 			s_r, s_i, all_aa_si, r, w_b = data

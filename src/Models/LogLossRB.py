@@ -11,8 +11,8 @@ class LogLossRB(nn.Module):
 		super(LogLossRB, self).__init__()
 		self.L = L
 		self.q = q
-		self.H = nn.Embedding(q, L)
-		self.J = nn.Embedding(q*q, L*L)
+		self.H = torch.zeros(q, L)
+		self.J = torch.zeros(q*q, L*L)
 		self.gpu = gpu
 		self.lambda_h = lambda_h
 		self.lambda_j = lambda_j
@@ -24,23 +24,19 @@ class LogLossRB(nn.Module):
 		if gpu:
 			self.all_aa = self.all_aa.cuda()
 		self.all_aa = Variable(self.all_aa)
+		self.H = nn.Parameter(self.H)
+		self.J = nn.Parameter(self.J)
 	
 	def symmetrize(self):
 		"""
 		Computes the symmetric J: J_{ij}(sigma_k,sigma_l) = J_{ji}(sigma_l, sigma_k)
 		"""
-		for J in self.J.parameters():
-			if self.gpu:
-				Jp = torch.FloatTensor(self.q, self.q, self.L, self.L).cuda()
-			else:
-				Jp = torch.FloatTensor(self.q, self.q, self.L, self.L)
-
-			Jp.copy_(J.view(self.q, self.q, self.L, self.L).data)
-			Jp = torch.transpose(torch.transpose(Jp, dim0=0, dim1=1), dim0=2, dim1=3)
-			Jp = (J.view(self.q, self.q, self.L, self.L).data + Jp)/2
-		J.data.copy_(Jp.view(self.q*self.q, self.L*self.L))
+		J = self.J.data.view(self.q, self.q, self.L, self.L)
+		Jt = torch.transpose(torch.transpose(J, dim0=0, dim1=1), dim0=2, dim1=3)
+		Js = (self.J.data.view(self.q, self.q, self.L, self.L) + Jt)/2
+		self.J.data.copy_(Js.view(self.q*self.q, self.L*self.L))
 	
-	def create_output(self):
+	def save(self):
 		"""
 		Creates an output file containing the computed H and J
 		"""
@@ -54,14 +50,14 @@ class LogLossRB(nn.Module):
 		"""
 		Computes renormalized matrix
 		"""
-		for J in self.J.parameters():
-			Jp = J.view(self.q, self.q, self.L, self.L)
-			Jp = Jp - torch.mean(Jp, dim=0) - torch.mean(Jp, dim=1) + torch.mean(torch.mean(Jp, dim=0), dim=0)
-			S_FN = Jp*Jp
-			S_FN = torch.sqrt(torch.sum(torch.sum(S_FN, dim=0), dim=0))
+		
+		J = self.J.view(self.q, self.q, self.L, self.L)
+		J = J - torch.mean(J, dim=0) - torch.mean(J, dim=1) + torch.mean(torch.mean(J, dim=0), dim=0)
+		S_FN = J*J
+		S_FN = torch.sqrt(torch.sum(torch.sum(S_FN, dim=0), dim=0))
 
-			S_CN = S_FN - torch.mean(S_FN, dim=0).view(1,self.L) * torch.mean(S_FN, dim=1).view(self.L,1) / torch.mean(S_FN)
-			return S_CN.data
+		S_CN = S_FN - torch.mean(S_FN, dim=0).view(1,self.L) * torch.mean(S_FN, dim=1).view(self.L,1) / torch.mean(S_FN)
+		return S_CN.data
 
 
 	def forward(self, sigma_r, sigma_i, sigma_ri, r, w_b):
@@ -80,16 +76,16 @@ class LogLossRB(nn.Module):
 			mask_extended[i, :, :].copy_(mask.data)
 		mask_extended = Variable(mask_extended)
 		
-		J_rili = self.J(sigma_ri).resize(self.q, self.L, self.L, self.L)
+		J_rili = self.J[sigma_ri.view(-1)].resize(self.q, self.L, self.L, self.L)
 		J_ili = torch.squeeze(J_rili[:,:,r,:])
+		print(J_ili)
 		J_l = (J_ili*mask_extended).sum(dim=1).sum(dim=1)
-		denominator = torch.exp(self.H(self.all_aa)[:,r] + J_l).sum()
+		print(J_ili*mask_extended)
+		denominator = torch.exp(self.H[self.all_aa][:,r] + J_l).sum()
 
-		Lpseudo = (-(self.H(self.all_aa)[:,r] + J_l)[sigma_r] + torch.log(denominator))*w_b[0]
+		Lpseudo = (-(self.H[self.all_aa][:,r] + J_l)[sigma_r] + torch.log(denominator))*w_b[0]
 
 		#regularization
-		for H in self.H.parameters():
-			Lpseudo += self.lambda_h*torch.sum(H*H)
-		for J in self.J.parameters():
-			Lpseudo += self.lambda_j*torch.sum(J*J)
+		Lpseudo += self.lambda_h*torch.sum(self.H*self.H)
+		Lpseudo += self.lambda_j*torch.sum(self.J*self.J)
 		return Lpseudo
