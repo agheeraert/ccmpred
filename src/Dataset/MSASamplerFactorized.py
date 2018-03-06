@@ -15,7 +15,7 @@ random.seed(42)
 from Bio.PDB.Polypeptide import aa1
 
 
-class MSASamplerKKp(Dataset):
+class MSASamplerFactorized(Dataset):
 	"""
 	The dataset that loads msa and samples b and r
 	"""
@@ -74,7 +74,7 @@ class MSASamplerKKp(Dataset):
 		"""
 		return self.dataset_size
 
-def get_msa_streamKKp(filename, batch_size = 1, shuffle = True):
-	dataset = MSASamplerKKp(filename)
+def get_msa_streamFactorized(filename, batch_size = 1, shuffle = True):
+	dataset = MSASamplerFactorized(filename)
 	trainloader = torch.utils.data.DataLoader(dataset, batch_size=1, shuffle=shuffle, num_workers=0)
 	return trainloader

@@ -13,7 +13,7 @@ class LogLossFactorized(nn.Module):
 	'''
 	Negative log loss given position and sequence
 	'''
-	def __init__(self, L, q=21, gpu=False, lambda_h=0.001, lambda_J=0.00075):
+	def __init__(self, L, q=21, gpu=False, lambda_h=0.002, lambda_J=0.0005):
 		super(LogLossFactorized, self).__init__()
 		self.L = L
 		self.q = q
@@ -63,13 +63,14 @@ class LogLossFactorized(nn.Module):
 		#denominator
 		Kli = self.K[:, sigma_i]
 		D = torch.log(torch.exp(torch.matmul(Kli,Jir) + self.H).sum(dim=0)).sum()
-		Lpseudo = w_b[0]*(N + D)        
+		Lpseudo = w_b[0]*(N + D)
+		Lpseudo_noreg = Lpseudo        
 		
 		#regularization
 		Lpseudo += self.lambda_h*torch.sum(self.H*self.H)
 		Lpseudo += self.lambda_J*torch.sum(self.J*self.J)
 		
-		return Lpseudo
+		return Lpseudo, Lpseudo_noreg
 		
 	def symmetrize(self):
 		"""
@@ -104,15 +105,7 @@ class LogLossFactorized(nn.Module):
 		self.K = torch.load('../results/1BDO_A_K.out')
 		self.J = torch.load('../results/1BDO_A_Kp.out')
 	
-	def final_loss(self):
-		Kir = self.K[sigma_i,:]
-		Jir = self.J*self.mask
-		#nominator
-		N = -((Kir[:,sigma_i] * Jir).sum(dim=0) + self.H[sigma_i,:].diag()).sum(dim=0)
-		#denominator
-		Kli = self.K[:, sigma_i]
-		D = torch.log(torch.exp(torch.matmul(Kli,Jir) + self.H ).sum(dim=0)).sum()
-		Lpseudo = w_b[0]*(N + D)
-
-		with open("../results/values.txt", 'a') as output:
-			output.write('lambda_h: ' + self.lambda_h, + 'lambda_J: ' + self.lambda_J, + 'Lpseudo: '+ Lpseudo)
+	def lambdas(self):
+		return self.lambda_h, self.lambda_J
+	
+	

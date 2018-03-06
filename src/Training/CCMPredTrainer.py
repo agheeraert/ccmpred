@@ -56,7 +56,7 @@ class CCMPredTrainer:
 				s_r = s_r.cuda()
 			s_r = Variable(s_r)
 				
-			model_out = self.model(s_r, w_b)
+			model_out, pure_loss = self.model(s_r, w_b) 
 			
 		else:
 			s_r, s_i, all_aa_si, r, w_b = data
@@ -72,4 +72,4 @@ class CCMPredTrainer:
 		self.optimizer.step()
 		self.model.symmetrize()
 
-		return model_out.data
+		return model_out.data, pure_loss.data

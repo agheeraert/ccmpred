@@ -62,6 +62,7 @@ class LogLossRB(nn.Module):
 
 	def forward(self, sigma_r, sigma_i, sigma_ri, r, w_b):
 		r = r[0]
+
 		mask = torch.eye(self.L)
 		if self.gpu:
 			mask = mask.cuda()
@@ -78,9 +79,7 @@ class LogLossRB(nn.Module):
 		
 		J_rili = self.J[sigma_ri.view(-1)].resize(self.q, self.L, self.L, self.L)
 		J_ili = torch.squeeze(J_rili[:,:,r,:])
-		print(J_ili)
 		J_l = (J_ili*mask_extended).sum(dim=1).sum(dim=1)
-		print(J_ili*mask_extended)
 		denominator = torch.exp(self.H[self.all_aa][:,r] + J_l).sum()
 
 		Lpseudo = (-(self.H[self.all_aa][:,r] + J_l)[sigma_r] + torch.log(denominator))*w_b[0]
@@ -89,3 +88,4 @@ class LogLossRB(nn.Module):
 		Lpseudo += self.lambda_h*torch.sum(self.H*self.H)
 		Lpseudo += self.lambda_j*torch.sum(self.J*self.J)
 		return Lpseudo
+	
