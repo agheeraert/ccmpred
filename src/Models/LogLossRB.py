@@ -83,9 +83,13 @@ class LogLossRB(nn.Module):
 		denominator = torch.exp(self.H[self.all_aa][:,r] + J_l).sum()
 
 		Lpseudo = (-(self.H[self.all_aa][:,r] + J_l)[sigma_r] + torch.log(denominator))*w_b[0]
+		pure_loss = Lpseudo
 
 		#regularization
 		Lpseudo += self.lambda_h*torch.sum(self.H*self.H)
 		Lpseudo += self.lambda_j*torch.sum(self.J*self.J)
-		return Lpseudo
+		return Lpseudo, pure_loss
+
+	def lambdas(self):
+		return self.lambda_h, self.lambda_j
 	

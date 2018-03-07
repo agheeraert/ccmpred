@@ -13,7 +13,7 @@ class LogLossFactorized(nn.Module):
 	'''
 	Negative log loss given position and sequence
 	'''
-	def __init__(self, L, q=21, gpu=False, lambda_h=0.002, lambda_J=0.0005):
+	def __init__(self, L, q=21, gpu=False, lambda_h=0.0014, lambda_J=0.0005):
 		super(LogLossFactorized, self).__init__()
 		self.L = L
 		self.q = q

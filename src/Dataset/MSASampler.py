@@ -20,7 +20,7 @@ class MSASampler(Dataset):
 	"""
 	The dataset that loads msa and samples b and r
 	"""
-	def __init__(self, filename, max_iter = 1000):
+	def __init__(self, filename, max_iter = 100):
 		"""
 		"""
 		self.filename = filename

@@ -65,7 +65,7 @@ class CCMPredTrainer:
 				s_r, s_i, all_aa_si = s_r.cuda(), s_i.cuda(), all_aa_si.cuda()
 			s_r, s_i, all_aa_si = Variable(s_r), Variable(s_i), Variable(all_aa_si)
 				
-			model_out = self.model(s_r, s_i, all_aa_si, r, w_b)
+			model_out, pure_loss = self.model(s_r, s_i, all_aa_si, r, w_b)
 
 		model_out.backward()
 		
