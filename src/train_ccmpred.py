@@ -34,7 +34,7 @@ if __name__=='__main__':
 	parser.add_argument('-lr', type=float,  default=0.0004 , help='Learning rate')
 	parser.add_argument('-lrd', type=float, default=0.00008, help='Learning rate decay')
 	parser.add_argument('-wd', type=float, default=0.0, help='Weight decay')
-	parser.add_argument('-max_epoch', type=int, default=50, help='Max epoch')
+	parser.add_argument('-max_epoch', type=int, default=300, help='Max epoch')
 	parser.add_argument('-gpu', default=None, help='Use gpu')
 	parser.add_argument('-gpu_num', type=int, default=1, help='GPU number')
 	parser.add_argument('-method', default='K', help='Use the method with J or K.K\'')
@@ -46,6 +46,7 @@ if __name__=='__main__':
 		gpu = False
 	else:
 		gpu = True
+
 	
 	torch.cuda.set_device(int(args.gpu_num))
 	loss_list = []
@@ -82,10 +83,16 @@ if __name__=='__main__':
 		pure_loss_list.append(pure_loss)
 
 		loss_list.append(loss)
+
+		f = plt.figure()
+		plt.title("Loss vs epoch")
+		plt.plot(loss_list)
+		plt.savefig('../results/loss.png')
 		
+		trainer.model.save()
 	
 	
-	trainer.model.save()
+	# trainer.model.load()
 	if not gpu:
 		cmat = trainer.model.contact_matrix().numpy()
 	else:
@@ -109,15 +116,11 @@ if __name__=='__main__':
 		plt.colorbar()
 		plt.savefig('../results/K.png')		
 
-	f = plt.figure()
-	plt.title("Loss vs epoch")
-	plt.plot(loss_list)
-	plt.savefig('../results/loss.png')
-
-	f = plt.figure()
-	plt.title("Pure loss vs epoch")
-	plt.plot(pure_loss_list)
-	plt.axis([0, 50, 50, 200])
-	plt.savefig('../results/pure_loss_'+str(trainer.model.lambdas()[0])+'_lH_'+str(trainer.model.lambdas()[1])+'_lJ.png')
+	
+	# f = plt.figure()
+	# plt.title("Pure loss vs epoch")
+	# plt.plot(pure_loss_list)
+	# plt.axis([0, 50, 50, 200])
+	# plt.savefig('../results/pure_loss_'+str(trainer.model.lambdas()[0])+'_lH_'+str(trainer.model.lambdas()[1])+'_lJ.png')
 
 	
