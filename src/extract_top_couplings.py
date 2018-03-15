@@ -57,7 +57,7 @@ if __name__=='__main__':
          for i in range(L):
             for j in range(L):
                 distances[i][j] = chain[i+77]['CA'] - chain[j+77]['CA']
-
+    
     #Renormalizing to plot the contact map
     cmap = (-1*(distances - np.max(distances)))/np.max(distances)
     f = plt.figure()

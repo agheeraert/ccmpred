@@ -6,6 +6,8 @@ from Training import CCMPredTrainer
 from Dataset.MSASampler import get_msa_stream
 from Dataset.MSASamplerFactorized import get_msa_streamFactorized
 from tqdm import tqdm
+from Bio.PDB import PDBParser
+from Bio.PDB.Polypeptide import aa3
 
 import matplotlib.pylab as plt
 import numpy as np
@@ -87,9 +89,30 @@ if __name__=='__main__':
 	
 	trainer.model.save()
 	if not gpu:
-		cmat = trainer.model.contact_matrix().numpy()
+		cmat = np.triu(trainer.model.contact_matrix().numpy(), k=1)
 	else:
-		cmat = trainer.model.contact_matrix().cpu().numpy()
+		cmat = np.triu(trainer.model.contact_matrix().cpu().numpy(), k=1)
+
+	# Plotting native vs predicted cmap
+	structure = PDBParser().get_structure('1BDO_A', '../database/1BDO_A.pdb')
+	model = structure[0]
+	L = len(list(structure.get_residues()))
+	distances = np.zeros((L, L))
+
+	for chain in model:
+		for i in range(L):
+			for j in range(L):
+				distances[i][j] = chain[i+77]['CA'] - chain[j+77]['CA']
+    
+	#Renormalizing to plot the contact map
+	cmap = np.tril((-1*(distances - np.max(distances)))/np.max(distances)*np.max(cmat), k=-1)
+	cmap = cmap+cmat
+
+	f = plt.figure()
+	plt.title("Contact map of the native vs predicted structure")
+	plt.imshow(cmap)
+	plt.colorbar()
+	plt.savefig('../results/nativevspredicted.png')
 	
 	f = plt.figure()
 	plt.title("This algorithm result")
@@ -98,15 +121,26 @@ if __name__=='__main__':
 	plt.savefig('../results/J.png')
 	
 	if args.method == 'K':
+
+		aa3.append("GAP")
 		if not gpu:
 			aaint = trainer.model.aa_interactions().numpy()
 		else:
 			aaint = trainer.model.aa_interactions().cpu().numpy()
 	
-		f = plt.figure()
+		fig = plt.figure()
+		ax = fig.add_subplot(111)
 		plt.title("Amino-acid interactions")
 		plt.imshow(aaint)
 		plt.colorbar()
+		plt.axis('off')
+		labelpadx = ax.xaxis.labelpad + 1
+		labelpady0 = ax.yaxis.labelpad + 10
+		labelpady1 = ax.xaxis.labelpad - 10
+		for i, a in enumerate(aa3):
+			for i, a in enumerate(aa3):
+				ax.annotate(a, xy=(i, 0), xytext=(0, -labelpadx), xycoords=('data', 'axes fraction'), textcoords='offset points', ha='center', va='top', rotation="vertical")
+				ax.annotate(a, xy=(0, i), xytext=(-labelpady0, -labelpady1), xycoords=('axes fraction', 'data'), textcoords='offset points', ha='center', va='top')
 		plt.savefig('../results/K.png')		
 
 	f = plt.figure()
@@ -114,10 +148,10 @@ if __name__=='__main__':
 	plt.plot(loss_list)
 	plt.savefig('../results/loss.png')
 
-	f = plt.figure()
-	plt.title("Pure loss vs epoch")
-	plt.plot(pure_loss_list)
-	plt.axis([0, 50, 50, 200])
-	plt.savefig('../results/pure_loss_'+str(trainer.model.lambdas()[0])+'_lH_'+str(trainer.model.lambdas()[1])+'_lJ.png')
+	# f = plt.figure()
+	# plt.title("Pure loss vs epoch")
+	# plt.plot(pure_loss_list)
+	# plt.axis([0, 50, 50, 200])
+	# plt.savefig('../results/pure_loss_'+str(trainer.model.lambdas()[0])+'_lH_'+str(trainer.model.lambdas()[1])+'_lJ.png')
 
 	
