@@ -15,6 +15,14 @@ if __name__=='__main__':
     for filename in os.listdir(DATA_DIR):
         if filename.find('.pdb')!=-1:
             names_list.append(filename[0:-4])
+    
+    #remove empty msa file
+    empty_msa_list = []
+    for filename in names_list:
+        if os.path.getsize(os.path.join(DATA_DIR, filename+'.aln')) == 0:
+            empty_msa_list.append(filename)
+
+    names_list = [filename for filename in names_list if filename not in empty_msa_list]
 
     for filename in names_list:
         with open(os.path.join(DATA_DIR, filename+'.aln')) as fin:
@@ -22,6 +30,7 @@ if __name__=='__main__':
             for line in fin:
                 msa.append(list(line.split()[0]))
         M = len(msa) #number of sequences
+        print(filename)
         L = len(msa[0]) #sequence length
         q = len(aa)
         for m in range(M):
@@ -33,7 +42,7 @@ if __name__=='__main__':
         msa = np.transpose(np.asarray(msa))
         frequencies_list = []
         for r in range(L):
-            frequencies_list.append([np.bincount(msa[r])])
+            frequencies_list.append([np.bincount(msa[r], minlength=q)])
         PPM = 1./M*np.transpose(np.concatenate(frequencies_list, axis=0)) #position probability matrix
 
         PSSM = np.log2(PPM/q)
