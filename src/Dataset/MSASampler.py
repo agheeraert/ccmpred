@@ -5,8 +5,8 @@ from torch.utils.data import Dataset
 from torch.utils.data import DataLoader
 import atexit
 import numpy as np
-import _pickle as pkl
-#import cPickle as pkl
+# import _pickle as pkl
+import cPickle as pkl
 
 from os import listdir
 from os.path import isfile

@@ -10,7 +10,7 @@ import os
 import sys
 
 sys.path.append(os.path.join(os.path.dirname(__file__), ".."))
-from Models import LogLossRB, LogLossFactorized
+from Models import LogLossRB, LogLossFactorized, LogLossProteinModel
 
 
 
@@ -21,15 +21,11 @@ class CCMPredTrainer:
 		self.lr_decay = lr_decay
 		self.gpu = gpu
 		self.method = method
-		if method == 'K':
-			self.model = LogLossFactorized.LogLossFactorized(L, q, gpu=gpu)
-		else:
-			self.model = LogLossRB.LogLossRB(L, q, gpu=gpu)
+		self.model = LogLossProteinModel(L, q)
+		self.model.cuda()
+
 		self.optimizer = optim.Adam(self.model.parameters(), lr=self.lr, weight_decay=self.wd)
-		if gpu:
-			self.model.cuda()
 		self.log = None
-		# self.lr_sceduler = GeometricLR(self.optimizer, self.lr_decay)
 
 		atexit.register(self.cleanup)
 	
@@ -49,24 +45,15 @@ class CCMPredTrainer:
 		Output: loss
 		"""
 		self.optimizer.zero_grad()
-		if self.method == 'K':
-			s_r, w_b = data
-			s_r = torch.squeeze(s_r)
-			if self.gpu:
-				s_r = s_r.cuda()
-			s_r = Variable(s_r)
-				
-			model_out, pure_loss = self.model(s_r, w_b) 
+		
+		s_r, w_b = data
+		s_r = torch.squeeze(s_r)
+		s_r = s_r.cuda()
+		s_r = Variable(s_r)
 			
-		else:
-			s_r, s_i, all_aa_si, r, w_b = data
-			s_r, s_i, all_aa_si = torch.squeeze(s_r), torch.squeeze(s_i), torch.squeeze(all_aa_si)
-			if self.gpu:
-				s_r, s_i, all_aa_si = s_r.cuda(), s_i.cuda(), all_aa_si.cuda()
-			s_r, s_i, all_aa_si = Variable(s_r), Variable(s_i), Variable(all_aa_si)
-				
-			model_out, pure_loss = self.model(s_r, s_i, all_aa_si, r, w_b)
-
+		model_out, pure_loss = self.model(s_r, w_b)
+		
+		
 		model_out.backward()
 		
 		self.optimizer.step()
