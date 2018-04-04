@@ -48,8 +48,8 @@ if __name__=='__main__':
         occurences = np.transpose(np.concatenate(occurences_list, axis=0))
 
         #pseudocounts
-        occurences = occurences + np.sqrt(L)/q
-        PPM = 1./(M+np.sqrt(L))*occurences #position probability matrix with pseudocounts
+        occurences = occurences + np.sqrt(M)/q
+        PPM = 1./(M+np.sqrt(M))*occurences #position probability matrix with pseudocounts
         PSSM = np.log2(PPM/q)
         # IC = -PPM*np.log(PPM)
         # print(IC)
