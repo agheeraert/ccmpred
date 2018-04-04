@@ -1,6 +1,8 @@
 import os
 import sys
 import numpy as np
+import matplotlib.pyplot as plt
+from tqdm import tqdm
 from Bio.PDB.Polypeptide import aa1
 from Bio.SubsMat.MatrixInfo import blosum62
 
@@ -24,13 +26,12 @@ if __name__=='__main__':
 
     names_list = [filename for filename in names_list if filename not in empty_msa_list]
 
-    for filename in names_list:
+    for num_file, filename in enumerate(tqdm(names_list)):
         with open(os.path.join(DATA_DIR, filename+'.aln')) as fin:
             msa = []
             for line in fin:
                 msa.append(list(line.split()[0]))
         M = len(msa) #number of sequences
-        print(filename)
         L = len(msa[0]) #sequence length
         q = len(aa)
         for m in range(M):
@@ -40,17 +41,35 @@ if __name__=='__main__':
                 else:
                     msa[m][r] = 20
         msa = np.transpose(np.asarray(msa))
-        frequencies_list = []
+        occurences_list = []
         for r in range(L):
-            frequencies_list.append([np.bincount(msa[r], minlength=q)])
-        PPM = 1./M*np.transpose(np.concatenate(frequencies_list, axis=0)) #position probability matrix
+            occurences_list.append([np.bincount(msa[r], minlength=q)])
 
+        occurences = np.transpose(np.concatenate(occurences_list, axis=0))
+
+        #pseudocounts
+        occurences = occurences + np.sqrt(L)/q
+        PPM = 1./(M+np.sqrt(L))*occurences #position probability matrix with pseudocounts
         PSSM = np.log2(PPM/q)
+        # IC = -PPM*np.log(PPM)
+        # print(IC)
+
+        # columns = range(L)
+        # rows = aa
+        # index = np.arange(len(columns))
+        # y_offset = np.zeros(len(columns))
+        # plt.title("Logo Plot")
+        # for row in range(q):
+        #     plt.bar(index, IC[row], 1, bottom=y_offset)
+        #     y_offset = y_offset +IC[row]
+        # plt.show()
+
+
 
         #Writing the output
         PSSM = PSSM.astype("str")
 
-        with open("../test/"+filename+".pssm", 'w') as output:
+        with open("../../database/pssm/"+filename+".pssm", 'w') as output:
             for k in range(q):
                 output.write(";".join(PSSM[k])+"\n")
 
