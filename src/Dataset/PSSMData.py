@@ -31,9 +31,9 @@ class PSSMData(Dataset):
                 if "[ID]" in line:
                     self.name_list.append(lines[num+1][:-1])
                     self.one_hot_list.append(list(lines[num+3][:-1]))
-                    pssm = np.zeros([self.q, len(lines[num+5].split("\t")[:-1])])
+                    pssm = np.zeros([self.q, len(lines[num+5].split("\t"))])
                     for k in range(self.q):
-                        pssm[k]=lines[num+5+k].split("\t")[:-1]
+                        pssm[k]=lines[num+5+k].split("\t")
                     self.pssm_list.append(pssm)
                     self.mask_list.append(list(lines[num+31][:-1]))
 
