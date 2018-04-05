@@ -63,4 +63,4 @@ class PSSMData(Dataset):
             """
             return self.dataset_size
         
-print(PSSMData("../../scripts/Dataset/alquraishi/testing"))
+print(PSSMData("/media/lupoglaz/ProteinsDataset/PSSM/casp11/testing"))
